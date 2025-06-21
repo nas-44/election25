@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Voting System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'primary-blue': '#6366f1',
+                        'primary-purple': '#8b5cf6',
+                        'accent-green': '#10b981',
+                        'accent-red': '#ef4444',
+                        'gray-light': '#f3f4f6',
+                        'gray-medium': '#e5e7eb',
+                        'gray-dark': '#374151',
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- Chart.js CDN for animated charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align items to the start to make room for scroll if content overflows */
+            min-height: 100vh;
+            padding: 20px;
+            color: #374151; /* Default text color */
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .page-section {
+            display: none; /* Hidden by default, managed by JS */
+        }
+        .page-section.active {
+            display: block;
+        }
+        .section-title {
+            font-size: 2.25rem; /* 36px */
+            font-weight: 800; /* Extra bold */
+            color: #1f2937;
+            margin-bottom: 25px;
+            text-align: center;
+            position: relative;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: -10px;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background-color: #6366f1;
+            border-radius: 2px;
+        }
+        .button-primary {
+            background-image: linear-gradient(to right, #6366f1, #8b5cf6);
+            color: white;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3);
+            border: none;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .button-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+        }
+        .button-primary:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .button-primary::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 15px;
+            height: 15px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+        }
+        .button-primary:active::before {
+            transform: translate(-50%, -50%) scale(20);
+            opacity: 1;
+        }
+        .button-secondary {
+            background-color: #4b5563;
+            color: white;
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .button-secondary:hover {
+            background-color: #1f2937;
+            transform: translateY(-1px);
+        }
+        .button-secondary:active {
+            transform: translateY(0);
+        }
+        .button-danger {
+            background-color: #ef4444;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .button-danger:hover {
+            background-color: #dc2626;
+        }
+        .input-field {
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 1rem;
+            color: #374151;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .input-field:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            outline: none;
+        }
+        .error-message {
+            color: #ef4444;
+            font-weight: 500;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        .success-message {
+            color: #10b981;
+            font-weight: 500;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        /* Specific styles for Cast Vote Page (EVM-like) */
+        .candidate-evm {
+            display: flex;
+            align-items: center;
+            background-color: #e0e7ff; /* Light blue background for EVM rows */
+            border: 1px solid #c7d2fe;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .candidate-evm.selected {
+            background-color: #bfd8ff; /* Slightly darker when selected */
+            border-color: #8da5e0;
+            box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
+        }
+        .candidate-evm-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .candidate-evm-name {
+            font-size: 1.25rem; /* 20px */
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .candidate-evm-party {
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+        .candidate-evm-symbol {
+            font-size: 2rem; /* Large symbol */
+            margin-right: 15px;
+        }
+        .vote-evm-button {
+            background-color: #10b981; /* Green button for voting */
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50%; /* Circular button */
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+        .vote-evm-button:hover {
+            background-color: #059669;
+            transform: scale(1.05);
+        }
+        .vote-evm-button:active {
+            transform: scale(1);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .vote-evm-button.disabled {
+            background-color: #9ca3af; /* Gray when disabled */
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .selected .vote-evm-button {
+            background-color: #2563eb; /* Blue when selected */
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+        }
+
+        /* Responsive adjustments for Cast Vote Page */
+        @media (max-width: 640px) {
+            .candidate-evm {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .candidate-evm-symbol {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            .vote-evm-button {
+                margin-top: 15px;
+            }
+            .candidate-evm-info {
+                align-items: center;
+            }
+        }
+
+        /* Live Results animation */
+        .live-result-item {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .live-result-candidate-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .live-result-candidate-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+        }
+        .live-result-votes-count {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+        }
+        .live-result-bar-container {
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            height: 25px;
+            overflow: hidden;
+            position: relative;
+        }
+        .live-result-bar {
+            height: 100%;
+            width: 0%;
+            background-image: linear-gradient(to right, #3b82f6, #6366f1);
+            border-radius: 8px;
+            transition: width 0.5s ease-out; /* Smooth transition for bar width */
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            box-shadow: 0 0 10px rgba(0,0,0,0.3) inset;
+        }
+
+        /* Table styles for admin voter list */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #4a5568;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: #f0f4f8;
+        }
+        .data-table tr:hover {
+            background-color: #e2e8f0;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Home Page -->
+        <div id="home-page" class="page-section active p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg shadow-md">
+            <h1 class="section-title">Welcome to E-Voting System</h1>
+            <p class="text-lg text-center text-gray-700 mb-8">Your secure and animated election experience.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <button class="button-primary" onclick="showPage('admin-login-page')">Admin Login</button>
+                <button class="button-primary" onclick="showPage('voter-register-page')">Voter Registration</button>
+                <button class="button-primary" onclick="showPage('cast-vote-page')">Cast Vote</button>
+                <button class="button-primary" onclick="showPage('results-page')">View Results</button>
+            </div>
+        </div>
+
+        <!-- Admin Login Page -->
+        <div id="admin-login-page" class="page-section p-6 bg-yellow-50 rounded-lg shadow-md">
+            <h2 class="section-title">Admin Login</h2>
+            <div class="max-w-sm mx-auto flex flex-col gap-4">
+                <input type="password" id="admin-password" class="input-field" placeholder="Enter Admin Password">
+                <p id="admin-login-status" class="error-message"></p>
+                <button class="button-primary w-full" onclick="adminLogin()">Login</button>
+                <button class="button-secondary w-full" onclick="showPage('home-page')">Back to Home</button>
+            </div>
+        </div>
+
+        <!-- Admin Page -->
+        <div id="admin-page" class="page-section p-6 bg-blue-50 rounded-lg shadow-md">
+            <h2 class="section-title">Admin Panel</h2>
+            <button class="button-secondary mb-6" onclick="showPage('home-page')">Back to Home</button>
+
+            <!-- Candidate Management -->
+            <div class="mb-8 p-5 bg-white rounded-lg shadow-inner">
+                <h3 class="text-xl font-bold mb-4 text-gray-700">Candidate Management</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" id="candidate-name-input" class="input-field" placeholder="Candidate Name">
+                    <input type="text" id="candidate-party-input" class="input-field" placeholder="Party Name (optional)">
+                    <input type="text" id="candidate-symbol-input" class="input-field" placeholder="Symbol (e.g., 🌟, 🐘)" maxlength="2">
+                    <button class="button-secondary col-span-1 md:col-span-2" onclick="addCandidate()">Add Candidate</button>
+                </div>
+                <p id="candidate-status" class="error-message"></p>
+                <div id="candidates-list-admin" class="mt-6 border-t pt-4">
+                    <h4 class="font-semibold text-lg mb-3">Current Candidates:</h4>
+                    <!-- Candidates will be listed here -->
+                </div>
+            </div>
+
+            <!-- Voter List Management -->
+            <div class="mb-8 p-5 bg-white rounded-lg shadow-inner">
+                <h3 class="text-xl font-bold mb-4 text-gray-700">Registered Voters</h3>
+                <p id="voter-list-status" class="success-message"></p>
+                <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                    <button class="button-secondary flex-1" onclick="downloadVoterList()">Download Voters (CSV)</button>
+                    <!-- For editing from Google Sheet, user would manually re-upload or sync.
+                         In this simulation, we handle internal data. -->
+                </div>
+                <div id="voters-list-admin" class="mt-6 border-t pt-4 overflow-x-auto">
+                    <h4 class="font-semibold text-lg mb-3">All Registered Voters:</h4>
+                    <table class="data-table w-full">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Admission No.</th>
+                                <th>Section</th>
+                                <th>Voted</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="voters-table-body">
+                            <!-- Voters will be listed here -->
+                        </tbody>
+                    </table>
+                    <p id="no-voters-message" class="text-center text-gray-500 mt-4 hidden">No voters registered yet.</p>
+                </div>
+            </div>
+
+            <!-- Live Poll Status Link -->
+            <div class="p-5 bg-white rounded-lg shadow-inner text-center">
+                <h3 class="text-xl font-bold mb-4 text-gray-700">Live Poll Status</h3>
+                <button class="button-primary" onclick="showLiveResultsProtected()">View Live Poll Status</button>
+            </div>
+        </div>
+
+        <!-- Voter Register Page -->
+        <div id="voter-register-page" class="page-section p-6 bg-purple-50 rounded-lg shadow-md">
+            <h2 class="section-title">Voter Registration</h2>
+            <div class="max-w-md mx-auto flex flex-col gap-4">
+                <input type="text" id="voter-name-input" class="input-field" placeholder="Your Name">
+                <input type="text" id="voter-admission-input" class="input-field" placeholder="Admission Number (Unique ID)">
+                <select id="voter-section-select" class="input-field">
+                    <option value="">Select Section</option>
+                    <option value="1-4">Section 1-4</option>
+                    <option value="5-7">Section 5-7</option>
+                    <option value="8-12">Section 8-12</option>
+                </select>
+                <p id="voter-register-status" class="error-message"></p>
+                <button class="button-primary w-full" onclick="registerVoter()">Go to Poll</button>
+                <button class="button-secondary w-full" onclick="showPage('home-page')">Back to Home</button>
+            </div>
+        </div>
+
+        <!-- Cast Vote Page -->
+        <div id="cast-vote-page" class="page-section p-6 bg-indigo-50 rounded-lg shadow-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="section-title flex-grow text-left md:text-center m-0">Cast Your Vote</h2>
+                <button class="button-secondary" onclick="showPage('home-page')">Home</button>
+            </div>
+
+            <!-- Voter Confirmation Section -->
+            <div id="voter-confirm-section" class="mb-6 p-5 bg-blue-100 rounded-lg shadow-inner text-center">
+                <h3 class="text-xl font-bold text-gray-700 mb-3">Confirm Your Details</h3>
+                <p id="voter-display-info" class="text-gray-600 text-lg mb-4">Please register first, or enter your Admission Number if already registered:</p>
+                <input type="text" id="confirm-admission-input" class="input-field max-w-xs mx-auto mb-4" placeholder="Enter your Admission Number">
+                <p id="cast-vote-status" class="error-message"></p>
+                <button class="button-primary" id="confirm-voter-button" onclick="confirmVoter()">Confirm Identity</button>
+                <button class="button-secondary ml-3" onclick="showPage('voter-register-page')">Register New Voter</button>
+            </div>
+
+            <!-- Candidate Voting Section -->
+            <div id="voting-buttons-section" class="hidden">
+                <h3 class="text-xl font-bold text-gray-700 mb-4 text-center">Select <span id="votes-needed">2</span> Candidates:</h3>
+                <div id="candidates-evm-container" class="flex flex-col gap-3">
+                    <!-- EVM-like candidate buttons will be inserted here -->
+                </div>
+                <p id="selection-status" class="error-message text-center mt-4"></p>
+                <button id="submit-votes-button" class="button-primary w-full mt-6 opacity-50 cursor-not-allowed" disabled onclick="submitVotes()">Submit Votes</button>
+            </div>
+        </div>
+
+        <!-- Results Page -->
+        <div id="results-page" class="page-section p-6 bg-green-50 rounded-lg shadow-md">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="section-title flex-grow text-left md:text-center m-0">Election Results Overview</h2>
+                <button class="button-secondary" onclick="showPage('home-page')">Home</button>
+            </div>
+
+            <!-- Candidate Wise Results -->
+            <div class="mb-8 p-5 bg-white rounded-lg shadow-inner">
+                <h3 class="text-xl font-bold mb-4 text-gray-700">Candidate-wise Vote Counts</h3>
+                <div id="candidate-results-display" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <p class="text-gray-600 text-center col-span-full" id="no-results-message">No votes recorded yet.</p>
+                </div>
+            </div>
+
+            <!-- Admin Actions for Results Page -->
+            <div class="p-5 bg-white rounded-lg shadow-inner flex flex-col sm:flex-row justify-center items-center gap-4">
+                <button class="button-secondary" onclick="downloadFinalResultsCSV()">Download Final Results (CSV)</button>
+                <button class="button-danger" onclick="confirmResetAllVotes()">Reset All Votes</button>
+                <button class="button-primary" onclick="showLiveResultsProtected()">Publish Live Results</button>
+            </div>
+        </div>
+
+        <!-- Live Results Page -->
+        <div id="liveresult-page" class="page-section p-6 bg-gray-900 text-white rounded-lg shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="section-title text-white flex-grow text-left md:text-center m-0 before:bg-white after:bg-white">Live Election Broadcast</h2>
+                <button class="button-secondary" onclick="showPage('home-page')">Home</button>
+            </div>
+            <p id="live-results-status" class="error-message text-center text-red-400 mb-4"></p>
+            <div id="live-chart-container" class="relative h-96 mb-8">
+                <canvas id="animatedVoteChart"></canvas>
+            </div>
+            <div id="live-poll-display" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Live poll results will appear here -->
+            </div>
+        </div>
+
+        <!-- Custom Confirmation Modal -->
+        <div id="confirmation-modal" class="modal-overlay">
+            <div class="modal-content">
+                <p id="modal-message" class="text-lg font-semibold text-gray-800 mb-6"></p>
+                <div class="modal-buttons">
+                    <button id="modal-confirm-button" class="button-primary">Confirm</button>
+                    <button id="modal-cancel-button" class="button-secondary bg-gray-500 hover:bg-gray-600">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio for beep sound -->
+    <audio id="beep-sound" src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjMuMTAwAAAAAAAAAAAAAAAAMGqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqd">
+    <script>
+        // --- Global Data & State ---
+        const ADMIN_PASSWORD = "2025";
+        // LIVE_ANIMATION_DURATION_MS: Total time for live results to reveal all votes (3-5 minutes as requested)
+        const LIVE_ANIMATION_DURATION_MS = 4 * 60 * 1000; // 4 minutes for simulation (240,000 ms)
+
+        let candidates = []; // [{ id: 'c1', name: 'Candidate A', party: 'Party X', symbol: '⭐' }]
+        let registeredVoters = []; // [{ id: 'v1', name: 'John Doe', admissionNo: 'AD123', section: '5-7', hasVoted: false }]
+        let votes = {}; // { 'c1': 10, 'c2': 5 }
+
+        let currentVoter = null; // Stores the voter object confirmed on the cast vote page
+        let selectedCandidatesForVote = []; // For cast vote page to select 2 candidates
+
+        let liveChart = null;
+        let liveAnimationInterval = null;
+        let animatedVotes = {}; // Current state of votes during live animation
+        let liveAnimationTotalSteps = 0; // Total steps for the animation
+        let liveAnimationCurrentStep = 0; // Current step of the animation
+
+        // --- Utility Functions ---
+
+        /**
+         * Shows a specific page and hides all others.
+         * @param {string} pageId The ID of the page section to show.
+         */
+        function showPage(pageId) {
+            const pages = document.querySelectorAll('.page-section');
+            pages.forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+
+            // Specific actions for page transitions
+            if (pageId === 'admin-page') {
+                renderAdminCandidates();
+                renderAdminVoters();
+                document.getElementById('admin-password').value = ''; // Clear password field
+                document.getElementById('admin-login-status').textContent = ''; // Clear status
+                stopLiveAnimation(); // Ensure live animation stops if admin navigates away
+            } else if (pageId === 'cast-vote-page') {
+                prepareCastVotePage();
+                stopLiveAnimation();
+            } else if (pageId === 'results-page') {
+                displayCandidateResults();
+                stopLiveAnimation();
+            } else if (pageId === 'liveresult-page') {
+                // This page is initiated by password protection, animation starts there
+            } else { // For other pages like home, login, register
+                stopLiveAnimation(); // Stop live animation if navigating away
+            }
+        }
+
+        /**
+         * Displays a temporary message (error or success) on the UI.
+         * @param {string} elementId The ID of the HTML element to display the message in.
+         * @param {string} message The message text.
+         * @param {boolean} isError True for error message (red), false for success (green).
+         * @param {number} duration Duration in milliseconds for the message to disappear.
+         */
+        function showMessage(elementId, message, isError = true, duration = 3000) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = message;
+                element.classList.remove(isError ? 'success-message' : 'error-message');
+                element.classList.add(isError ? 'error-message' : 'success-message');
+                setTimeout(() => {
+                    element.textContent = '';
+                    element.classList.remove('error-message', 'success-message');
+                }, duration);
+            }
+        }
+
+        /**
+         * Generates a simple unique ID.
+         * @returns {string} A unique ID string.
+         */
+        function generateUniqueId() {
+            return '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        /**
+         * Plays a short beep sound.
+         */
+        function playBeep() {
+            const beepSound = document.getElementById('beep-sound');
+            if (beepSound) {
+                beepSound.currentTime = 0; // Rewind to start if already playing
+                beepSound.play().catch(e => console.error("Audio playback failed:", e));
+            }
+        }
+
+        // --- Local Storage Management ---
+
+        /**
+         * Saves data to localStorage.
+         * @param {string} key The key to save data under.
+         * @param {any} data The data to save.
+         */
+        function saveData(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        /**
+         * Loads data from localStorage.
+         * @param {string} key The key to load data from.
+         * @param {any} defaultValue The default value if data is not found.
+         * @returns {any} The loaded data or default value.
+         */
+        function loadData(key, defaultValue) {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : defaultValue;
+        }
+
+        /**
+         * Initializes all data from localStorage or sets default empty values.
+         */
+        function loadAllData() {
+            candidates = loadData('e_voting_candidates', []);
+            registeredVoters = loadData('e_voting_registered_voters', []);
+            votes = loadData('e_voting_votes', {});
+
+            // Initialize vote counts for new candidates or if votes object is empty
+            candidates.forEach(candidate => {
+                if (votes[candidate.id] === undefined) {
+                    votes[candidate.id] = 0;
+                }
+            });
+            saveData('e_voting_votes', votes); // Save to ensure all candidates have 0 if new
+        }
+
+        // --- Modals (Confirmation) ---
+        let modalConfirmCallback = null;
+
+        /**
+         * Opens the custom confirmation modal.
+         * @param {string} message The message to display in the modal.
+         * @param {Function} onConfirm The callback function to execute if confirmed.
+         * @param {boolean} showPasswordInput If true, adds a password input to the modal.
+         */
+        function openModal(message, onConfirm, showPasswordInput = false) {
+            const modalMessageDiv = document.getElementById('modal-message');
+            modalMessageDiv.innerHTML = ''; // Clear previous content
+
+            const p = document.createElement('p');
+            p.textContent = message;
+            p.className = 'text-lg font-semibold text-gray-800 mb-6';
+            modalMessageDiv.appendChild(p);
+
+            const adminPassInput = document.createElement('input');
+            if (showPasswordInput) {
+                adminPassInput.type = 'password';
+                adminPassInput.placeholder = 'Admin Password';
+                adminPassInput.className = 'input-field mt-4';
+                adminPassInput.id = 'modal-admin-password-input'; // Unique ID for input
+                modalMessageDiv.appendChild(adminPassInput);
+            }
+
+            document.getElementById('confirmation-modal').classList.add('open');
+            modalConfirmCallback = () => {
+                let result = true;
+                if (showPasswordInput) {
+                    result = adminPassInput.value === ADMIN_PASSWORD;
+                }
+                onConfirm(result); // Pass the result of password check to callback
+            };
+        }
+
+        /**
+         * Closes the custom confirmation modal.
+         */
+        function closeModal() {
+            document.getElementById('confirmation-modal').classList.remove('open');
+            modalConfirmCallback = null;
+            // Reset modal button click handlers to default to avoid unintended behavior
+            document.getElementById('modal-confirm-button').onclick = () => { if (modalConfirmCallback) modalConfirmCallback(); closeModal(); };
+        }
+
+        // Initial event listeners for modal buttons
+        document.getElementById('modal-confirm-button').addEventListener('click', () => {
+            if (modalConfirmCallback) {
+                modalConfirmCallback();
+            }
+            closeModal();
+        });
+        document.getElementById('modal-cancel-button').addEventListener('click', closeModal);
+
+
+        // --- Page Logic ---
+
+        // Admin Login Page
+        function adminLogin() {
+            const passwordInput = document.getElementById('admin-password');
+            const statusElement = document.getElementById('admin-login-status');
+            if (passwordInput.value === ADMIN_PASSWORD) {
+                showPage('admin-page');
+            } else {
+                showMessage('admin-login-status', 'Incorrect password!', true);
+            }
+        }
+
+        // Admin Page - Candidate Management
+        function addCandidate() {
+            const nameInput = document.getElementById('candidate-name-input');
+            const partyInput = document.getElementById('candidate-party-input');
+            const symbolInput = document.getElementById('candidate-symbol-input');
+            const statusElement = document.getElementById('candidate-status');
+
+            const name = nameInput.value.trim();
+            const party = partyInput.value.trim();
+            const symbol = symbolInput.value.trim();
+
+            if (!name) {
+                showMessage('candidate-status', 'Candidate Name is required.', true);
+                return;
+            }
+            if (candidates.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                showMessage('candidate-status', 'Candidate with this name already exists.', true);
+                return;
+            }
+
+            const newCandidate = {
+                id: generateUniqueId(),
+                name: name,
+                party: party,
+                symbol: symbol || '👤' // Default symbol if none provided
+            };
+            candidates.push(newCandidate);
+            votes[newCandidate.id] = 0; // Initialize vote count for new candidate
+            saveData('e_voting_candidates', candidates);
+            saveData('e_voting_votes', votes);
+            showMessage('candidate-status', `Candidate "${name}" added successfully!`, false);
+            nameInput.value = '';
+            partyInput.value = '';
+            symbolInput.value = '';
+            renderAdminCandidates(); // Re-render the list
+        }
+
+        function removeCandidate(candidateId) {
+            openModal(`Are you sure you want to remove this candidate? This will also remove their votes.`, (confirmed) => {
+                if (!confirmed) return; // User cancelled modal
+
+                const initialCandidateCount = candidates.length;
+                candidates = candidates.filter(c => c.id !== candidateId);
+                if (candidates.length < initialCandidateCount) {
+                    delete votes[candidateId]; // Remove votes for this candidate
+                    saveData('e_voting_candidates', candidates);
+                    saveData('e_voting_votes', votes);
+                    showMessage('candidate-status', 'Candidate removed successfully.', false);
+                    renderAdminCandidates(); // Re-render the list
+                    displayCandidateResults(); // Update results page
+                } else {
+                    showMessage('candidate-status', 'Candidate not found.', true);
+                }
+            });
+        }
+
+        function renderAdminCandidates() {
+            const listContainer = document.getElementById('candidates-list-admin');
+            let html = '<h4 class="font-semibold text-lg mb-3">Current Candidates:</h4>';
+            if (candidates.length === 0) {
+                html += '<p class="text-gray-500">No candidates added yet.</p>';
+            } else {
+                html += '<ul class="list-disc pl-5 space-y-2">';
+                candidates.forEach(c => {
+                    html += `<li class="flex items-center justify-between bg-gray-50 p-2 rounded-md">
+                                <span>${c.symbol} ${c.name} ${c.party ? `(${c.party})` : ''}</span>
+                                <button class="button-danger ml-4" onclick="removeCandidate('${c.id}')">Remove</button>
+                            </li>`;
+                });
+                html += '</ul>';
+            }
+            listContainer.innerHTML = html;
+        }
+
+        // Admin Page - Voter Management
+        function renderAdminVoters() {
+            const tableBody = document.getElementById('voters-table-body');
+            const noVotersMessage = document.getElementById('no-voters-message');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            if (registeredVoters.length === 0) {
+                noVotersMessage.classList.remove('hidden');
+                return;
+            } else {
+                noVotersMessage.classList.add('hidden');
+            }
+
+            registeredVoters.forEach(voter => {
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td class="px-4 py-2">${voter.name}</td>
+                    <td class="px-4 py-2">${voter.admissionNo}</td>
+                    <td class="px-4 py-2">${voter.section}</td>
+                    <td class="px-4 py-2">${voter.hasVoted ? 'Yes' : 'No'}</td>
+                    <td class="px-4 py-2">
+                        <button class="button-secondary text-sm px-2 py-1 mr-2" onclick="editVoter('${voter.id}')">Edit</button>
+                        <button class="button-danger text-sm px-2 py-1" onclick="deleteVoter('${voter.id}')">Delete</button>
+                    </td>
+                `;
+            });
+        }
+
+        function editVoter(voterId) {
+            const voterIndex = registeredVoters.findIndex(v => v.id === voterId);
+            if (voterIndex === -1) {
+                showMessage('voter-list-status', 'Voter not found.', true);
+                return;
+            }
+
+            const voter = registeredVoters[voterIndex];
+            // Using prompt for simplicity. In a real app, this would be a dedicated modal form.
+            let newName = prompt(`Edit Name for ${voter.name}:`, voter.name);
+            if (newName === null) return; // User cancelled
+            newName = newName.trim();
+
+            let newAdmissionNo = prompt(`Edit Admission No. for ${voter.name}:`, voter.admissionNo);
+            if (newAdmissionNo === null) return; // User cancelled
+            newAdmissionNo = newAdmissionNo.trim();
+
+            let newSection = prompt(`Edit Section for ${voter.name} (1-4, 5-7, 8-12):`, voter.section);
+            if (newSection === null) return; // User cancelled
+            newSection = newSection.trim();
+
+            // Basic validation for new admission number uniqueness
+            if (newAdmissionNo !== voter.admissionNo && registeredVoters.some(v => v.admissionNo === newAdmissionNo)) {
+                showMessage('voter-list-status', 'Admission Number already exists for another voter.', true);
+                return;
+            }
+            if (!['1-4', '5-7', '8-12'].includes(newSection)) {
+                 showMessage('voter-list-status', 'Invalid section. Please use 1-4, 5-7, or 8-12.', true);
+                 return;
+            }
+
+            voter.name = newName;
+            voter.admissionNo = newAdmissionNo;
+            voter.section = newSection;
+
+            saveData('e_voting_registered_voters', registeredVoters);
+            showMessage('voter-list-status', `Voter ${voter.name} updated successfully!`, false);
+            renderAdminVoters();
+        }
+
+        function deleteVoter(voterId) {
+            openModal(`Are you sure you want to delete this voter?`, (confirmed) => {
+                if (!confirmed) return; // User cancelled modal
+
+                const initialVoterCount = registeredVoters.length;
+                registeredVoters = registeredVoters.filter(v => v.id !== voterId);
+                if (registeredVoters.length < initialVoterCount) {
+                    saveData('e_voting_registered_voters', registeredVoters);
+                    showMessage('voter-list-status', 'Voter deleted successfully.', false);
+                    renderAdminVoters();
+                } else {
+                    showMessage('voter-list-status', 'Voter not found.', true);
+                }
+            });
+        }
+
+        function downloadVoterList() {
+            let csvContent = "Name,Admission Number,Section,Has Voted\n";
+            registeredVoters.forEach(voter => {
+                csvContent += `"${voter.name}","${voter.admissionNo}","${voter.section}",${voter.hasVoted ? 'Yes' : 'No'}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'registered_voters.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showMessage('voter-list-status', 'Voter list downloaded!', false);
+            } else {
+                showMessage('voter-list-status', 'Your browser does not support downloading files directly. Please copy the data manually from console.', true);
+                console.log(csvContent);
+            }
+        }
+
+
+        // Voter Register Page
+        function registerVoter() {
+            const nameInput = document.getElementById('voter-name-input');
+            const admissionInput = document.getElementById('voter-admission-input');
+            const sectionSelect = document.getElementById('voter-section-select');
+            const statusElement = document.getElementById('voter-register-status');
+
+            const name = nameInput.value.trim();
+            const admissionNo = admissionInput.value.trim();
+            const section = sectionSelect.value;
+
+            if (!name || !admissionNo || !section) {
+                showMessage('voter-register-status', 'All fields are required!', true);
+                return;
+            }
+
+            if (registeredVoters.some(voter => voter.admissionNo === admissionNo)) {
+                showMessage('voter-register-status', 'Admission Number already registered!', true);
+                return;
+            }
+
+            const newVoter = {
+                id: generateUniqueId(),
+                name: name,
+                admissionNo: admissionNo,
+                section: section,
+                hasVoted: false
+            };
+            registeredVoters.push(newVoter);
+            saveData('e_voting_registered_voters', registeredVoters);
+            showMessage('voter-register-status', 'Registration successful! Redirecting to poll...', false, 2000);
+
+            // Store the newly registered voter for the cast vote page for auto-fill
+            sessionStorage.setItem('currentVoterAdmissionNo', admissionNo);
+
+            nameInput.value = '';
+            admissionInput.value = '';
+            sectionSelect.value = '';
+            setTimeout(() => showPage('cast-vote-page'), 2000);
+        }
+
+        // Cast Vote Page
+        function prepareCastVotePage() {
+            const confirmSection = document.getElementById('voter-confirm-section');
+            const votingSection = document.getElementById('voting-buttons-section');
+            const voterDisplayInfo = document.getElementById('voter-display-info');
+            const confirmAdmissionInput = document.getElementById('confirm-admission-input');
+            const castVoteStatus = document.getElementById('cast-vote-status');
+
+            // Reset state for new vote session
+            currentVoter = null;
+            selectedCandidatesForVote = [];
+            updateSubmitButtonState();
+            renderEVMButtons(); // Ensure candidates are rendered with correct initial state
+            castVoteStatus.textContent = '';
+            document.getElementById('selection-status').textContent = '';
+
+            const lastRegisteredAdmissionNo = sessionStorage.getItem('currentVoterAdmissionNo');
+            if (lastRegisteredAdmissionNo) {
+                confirmAdmissionInput.value = lastRegisteredAdmissionNo;
+                voterDisplayInfo.innerHTML = `Welcome back! Please confirm your identity. <br> Admission No: ${lastRegisteredAdmissionNo}`;
+            } else {
+                confirmAdmissionInput.value = '';
+                voterDisplayInfo.textContent = `Please register first, or enter your Admission Number if already registered:`;
+            }
+
+            confirmSection.classList.remove('hidden');
+            votingSection.classList.add('hidden');
+        }
+
+        function confirmVoter() {
+            const confirmAdmissionInput = document.getElementById('confirm-admission-input');
+            const castVoteStatus = document.getElementById('cast-vote-status');
+            const admissionNo = confirmAdmissionInput.value.trim();
+
+            if (!admissionNo) {
+                showMessage('cast-vote-status', 'Please enter your Admission Number.', true);
+                return;
+            }
+
+            const foundVoter = registeredVoters.find(voter => voter.admissionNo === admissionNo);
+
+            if (!foundVoter) {
+                showMessage('cast-vote-status', 'Admission Number not found. Please register first.', true);
+                currentVoter = null;
+                return;
+            }
+
+            if (foundVoter.hasVoted) {
+                showMessage('cast-vote-status', `Voter ${foundVoter.name}, you have already cast your vote.`, true);
+                currentVoter = null;
+                return;
+            }
+
+            currentVoter = foundVoter;
+            sessionStorage.setItem('currentVoterAdmissionNo', admissionNo); // Persist for session
+            showMessage('cast-vote-status', `Identity confirmed for ${currentVoter.name}! Please proceed to vote.`, false, 2000);
+
+            document.getElementById('voter-confirm-section').classList.add('hidden');
+            document.getElementById('voting-buttons-section').classList.remove('hidden');
+            renderEVMButtons(); // Render candidates after confirmation
+            updateSubmitButtonState(); // Update button state
+        }
+
+        function renderEVMButtons() {
+            const container = document.getElementById('candidates-evm-container');
+            container.innerHTML = '';
+            if (candidates.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-600">No candidates available. Please ask admin to add candidates.</p>';
+                document.getElementById('submit-votes-button').disabled = true;
+                return;
+            }
+            if (candidates.length < 2) {
+                 container.innerHTML = `<p class="text-center text-gray-600">Need at least 2 candidates to vote. Currently: ${candidates.length}.</p>`;
+                 document.getElementById('submit-votes-button').disabled = true;
+                 return;
+            }
+
+            candidates.forEach(candidate => {
+                const isSelected = selectedCandidatesForVote.includes(candidate.id);
+                // Determine if vote buttons should be disabled for this session
+                const isDisabledForVoter = currentVoter && currentVoter.hasVoted;
+
+                const buttonHtml = `
+                    <div class="candidate-evm ${isSelected ? 'selected' : ''}" data-candidate-id="${candidate.id}">
+                        <span class="candidate-evm-symbol">${candidate.symbol}</span>
+                        <div class="candidate-evm-info">
+                            <span class="candidate-evm-name">${candidate.name}</span>
+                            <span class="candidate-evm-party">${candidate.party || 'Independent'}</span>
+                        </div>
+                        <button class="vote-evm-button ${isDisabledForVoter ? 'disabled' : ''}"
+                                onclick="toggleCandidateSelection('${candidate.id}')"
+                                ${isDisabledForVoter ? 'disabled' : ''}>
+                            ${isSelected ? '✔' : '🗳️'}
+                        </button>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', buttonHtml);
+            });
+        }
+
+        function toggleCandidateSelection(candidateId) {
+            playBeep(); // Play beep sound
+            const index = selectedCandidatesForVote.indexOf(candidateId);
+            const selectionStatus = document.getElementById('selection-status');
+
+            if (currentVoter && currentVoter.hasVoted) {
+                showMessage('cast-vote-status', 'You have already voted.', true);
+                return;
+            }
+
+            if (index > -1) {
+                // Deselect
+                selectedCandidatesForVote.splice(index, 1);
+            } else {
+                // Select
+                if (selectedCandidatesForVote.length < 2) {
+                    selectedCandidatesForVote.push(candidateId);
+                } else {
+                    showMessage('selection-status', 'You can only select two candidates.', true);
+                    return;
+                }
+            }
+            selectionStatus.textContent = `Selected: ${selectedCandidatesForVote.length}/2`;
+            renderEVMButtons(); // Re-render to update selection visual
+            updateSubmitButtonState();
+        }
+
+        function updateSubmitButtonState() {
+            const submitButton = document.getElementById('submit-votes-button');
+            if (selectedCandidatesForVote.length === 2 && currentVoter && !currentVoter.hasVoted) {
+                submitButton.disabled = false;
+                submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                submitButton.disabled = true;
+                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            // Update votes needed text
+            document.getElementById('votes-needed').textContent = 2 - selectedCandidatesForVote.length;
+            if (document.getElementById('votes-needed').textContent === "0") {
+                 document.getElementById('votes-needed').textContent = "";
+                 document.getElementById('selection-status').textContent = "Two candidates selected. Ready to submit!";
+                 document.getElementById('selection-status').classList.remove('error-message');
+                 document.getElementById('selection-status').classList.add('success-message');
+            } else {
+                 document.getElementById('selection-status').classList.remove('success-message');
+                 document.getElementById('selection-status').classList.add('error-message');
+            }
+        }
+
+        function submitVotes() {
+            if (selectedCandidatesForVote.length !== 2) {
+                showMessage('selection-status', 'Please select exactly two candidates.', true);
+                return;
+            }
+            if (!currentVoter) {
+                showMessage('cast-vote-status', 'Please confirm your identity first.', true);
+                return;
+            }
+            if (currentVoter.hasVoted) {
+                showMessage('cast-vote-status', 'You have already voted!', true);
+                return;
+            }
+
+            selectedCandidatesForVote.forEach(candidateId => {
+                if (votes[candidateId] !== undefined) {
+                    votes[candidateId]++;
+                } else {
+                    votes[candidateId] = 1; // Should not happen if candidates are initialized properly
+                }
+            });
+
+            // Mark voter as having voted
+            const voterIndex = registeredVoters.findIndex(v => v.id === currentVoter.id);
+            if (voterIndex > -1) {
+                registeredVoters[voterIndex].hasVoted = true;
+                currentVoter.hasVoted = true; // Update current session voter object
+            }
+
+            saveData('e_voting_votes', votes);
+            saveData('e_voting_registered_voters', registeredVoters);
+
+            showMessage('cast-vote-status', 'Your votes have been successfully cast!', false, 5000);
+            document.getElementById('selection-status').textContent = '';
+            selectedCandidatesForVote = []; // Clear selections
+            renderEVMButtons(); // Update buttons to show disabled state
+            updateSubmitButtonState(); // Ensure button is disabled
+
+            // Optionally, redirect after a short delay
+            // setTimeout(() => showPage('results-page'), 3000);
+        }
+
+
+        // Results Page
+        function displayCandidateResults() {
+            const displayDiv = document.getElementById('candidate-results-display');
+            const noResultsMessage = document.getElementById('no-results-message');
+            displayDiv.innerHTML = ''; // Clear previous content
+
+            if (Object.keys(votes).length === 0 || candidates.length === 0) {
+                noResultsMessage.classList.remove('hidden');
+                return;
+            } else {
+                noResultsMessage.classList.add('hidden');
+            }
+
+            // Sort candidates by current votes in descending order
+            const sortedCandidates = candidates
+                .map(c => ({
+                    ...c,
+                    currentVotes: votes[c.id] || 0
+                }))
+                .sort((a, b) => b.currentVotes - a.currentVotes);
+
+            sortedCandidates.forEach(candidate => {
+                const card = document.createElement('div');
+                card.className = 'bg-blue-100 p-4 rounded-lg shadow-md flex items-center justify-between';
+                card.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="text-3xl mr-4">${candidate.symbol}</span>
+                        <div>
+                            <h4 class="text-lg font-bold">${candidate.name}</h4>
+                            <p class="text-sm text-gray-700">${candidate.party || 'Independent'}</p>
+                        </div>
+                    </div>
+                    <span class="text-2xl font-extrabold text-primary-blue">${candidate.currentVotes}</span>
+                `;
+                displayDiv.appendChild(card);
+            });
+        }
+
+        function confirmResetAllVotes() {
+            openModal('Are you absolutely sure you want to reset ALL votes and voter data? This cannot be undone!', (confirmed) => {
+                if (confirmed) {
+                    resetAllData();
+                }
+            });
+        }
+
+        function resetAllData() {
+            localStorage.clear(); // Clears all local storage data for this domain
+            sessionStorage.clear(); // Clears all session storage
+
+            // Reset in-memory data
+            candidates = [];
+            registeredVoters = [];
+            votes = {};
+            currentVoter = null;
+            selectedCandidatesForVote = [];
+
+            // Re-initialize for a fresh start
+            loadAllData(); // This will re-populate with empty arrays/objects
+            showMessage('results-page .success-message', 'All election data has been reset.', false); // Display message on results page if visible
+            displayCandidateResults(); // Update display on results page
+            renderAdminCandidates(); // Update admin page lists
+            renderAdminVoters();
+            stopLiveAnimation(); // Ensure live animation is stopped
+            showPage('home-page'); // Redirect to home
+        }
+
+        function downloadFinalResultsCSV() {
+            let csvContent = "Candidate,Party,Symbol,Votes\n";
+            const sortedCandidates = candidates
+                .map(c => ({
+                    ...c,
+                    currentVotes: votes[c.id] || 0
+                }))
+                .sort((a, b) => b.currentVotes - a.currentVotes);
+
+            sortedCandidates.forEach(c => {
+                csvContent += `"${c.name}","${c.party}","${c.symbol}",${c.currentVotes}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', 'final_election_results.csv');
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showMessage('results-page .success-message', 'Final results downloaded!', false);
+            } else {
+                showMessage('results-page .error-message', 'Your browser does not support downloading files directly. Please copy the data manually from console.', true);
+                console.log(csvContent);
+            }
+        }
+
+
+        // Live Results Page
+        function showLiveResultsProtected() {
+            openModal('Enter Admin Password to view Live Results:', (passwordConfirmed) => {
+                if (passwordConfirmed) {
+                    showPage('liveresult-page');
+                } else {
+                    showMessage('live-results-status', 'Incorrect password!', true);
+                }
+            }, true); // Pass true to show password input
+        }
+
+        function initializeLiveChart() {
+            if (liveChart) {
+                liveChart.destroy(); // Destroy existing chart if any
+            }
+            const ctx = document.getElementById('animatedVoteChart').getContext('2d');
+
+            // Create a copy of current votes to animate from 0
+            animatedVotes = {};
+            candidates.forEach(c => animatedVotes[c.id] = 0);
+
+            liveChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: candidates.map(c => c.name),
+                    datasets: [{
+                        label: 'Votes',
+                        data: candidates.map(c => 0), // Start from 0
+                        backgroundColor: candidates.map((_, i) => [
+                            'rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 206, 86, 0.8)', 'rgba(75, 192, 192, 0.8)',
+                            'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)',
+                            'rgba(199, 199, 199, 0.8)', 'rgba(83, 102, 255, 0.8)'
+                        ][i % 8]), // Cycle through colors
+                        borderColor: candidates.map((_, i) => [
+                            'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)',
+                            'rgba(199, 199, 199, 1)', 'rgba(83, 102, 255, 1)'
+                        ][i % 8]),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y', // Horizontal bars
+                    animation: {
+                        duration: 500, // Smooth transition for each step
+                        easing: 'linear',
+                        onComplete: () => {
+                            // Optional: update secondary display after animation step
+                            updateLivePollDisplay(animatedVotes);
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0,
+                                color: '#fff' // White ticks
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.2)' // Light grid lines
+                            },
+                            title: {
+                                display: true,
+                                text: 'Number of Votes',
+                                color: '#fff',
+                                font: { size: 14, weight: 'bold' }
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#fff' // White ticks
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.2)'
+                            },
+                            title: {
+                                display: true,
+                                text: 'Candidates',
+                                color: '#fff',
+                                font: { size: 14, weight: 'bold' }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.raw + ' votes';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function startLiveAnimation() {
+            if (liveAnimationInterval) {
+                clearInterval(liveAnimationInterval);
+            }
+            initializeLiveChart();
+
+            const totalVotes = Object.values(votes).reduce((sum, count) => sum + count, 0);
+            if (totalVotes === 0 || candidates.length === 0) {
+                showMessage('live-results-status', 'No votes to animate or no candidates configured. Please add candidates and cast some votes first.', true);
+                return;
+            }
+
+            // Calculate steps (e.g., 10 updates per second)
+            const updateFrequency = 100; // ms per update (10 times per second)
+            liveAnimationTotalSteps = Math.ceil(LIVE_ANIMATION_DURATION_MS / updateFrequency);
+
+            liveAnimationCurrentStep = 0;
+
+            // Calculate final vote percentages for distribution
+            const finalVotePercentages = {};
+            candidates.forEach(c => {
+                finalVotePercentages[c.id] = (votes[c.id] || 0) / totalVotes;
+            });
+
+            liveAnimationInterval = setInterval(() => {
+                liveAnimationCurrentStep++;
+
+                if (liveAnimationCurrentStep <= liveAnimationTotalSteps) {
+                    let currentTotalAnimatedVotes = 0;
+                    // Distribute total votes proportionally up to current step
+                    candidates.forEach(c => {
+                        // Calculate target vote count for this step based on percentage and step progress
+                        const targetVotesForStep = Math.round(totalVotes * finalVotePercentages[c.id] * (liveAnimationCurrentStep / liveAnimationTotalSteps));
+                        animatedVotes[c.id] = targetVotesForStep;
+                        currentTotalAnimatedVotes += targetVotesForStep;
+                    });
+
+                    // Update chart data and re-sort for animation
+                    const sortedAnimated = candidates
+                        .map(c => ({ ...c, currentVotes: animatedVotes[c.id] }))
+                        .sort((a, b) => b.currentVotes - a.currentVotes);
+
+                    liveChart.data.labels = sortedAnimated.map(c => c.name);
+                    liveChart.data.datasets[0].data = sortedAnimated.map(c => c.currentVotes);
+                    // Reassign background colors to match sorted order
+                    liveChart.data.datasets[0].backgroundColor = sortedAnimated.map((sc, i) => {
+                        // Use a consistent color mapping based on original candidate index
+                        const originalCandidateIndex = candidates.findIndex(oc => oc.id === sc.id);
+                        return liveChart.options.data.datasets[0].backgroundColor[originalCandidateIndex];
+                    });
+                    liveChart.update(); // This triggers the Chart.js animation
+
+                    // Update the separate live poll display
+                    updateLivePollDisplay(animatedVotes);
+
+                } else {
+                    // Animation complete, ensure final values are shown and stop
+                    candidates.forEach(c => animatedVotes[c.id] = votes[c.id] || 0); // Ensure final votes are exact
+                     const sortedFinal = candidates
+                        .map(c => ({ ...c, currentVotes: animatedVotes[c.id] }))
+                        .sort((a, b) => b.currentVotes - a.currentVotes);
+
+                    liveChart.data.labels = sortedFinal.map(c => c.name);
+                    liveChart.data.datasets[0].data = sortedFinal.map(c => c.currentVotes);
+                    liveChart.update();
+                    updateLivePollDisplay(animatedVotes); // Final update
+                    clearInterval(liveAnimationInterval);
+                    liveAnimationInterval = null;
+                    showMessage('live-results-status', 'Live results announcement complete!', false, 5000);
+                }
+            }, updateFrequency);
+        }
+
+        function stopLiveAnimation() {
+            if (liveAnimationInterval) {
+                clearInterval(liveAnimationInterval);
+                liveAnimationInterval = null;
+            }
+            if (liveChart) {
+                liveChart.destroy();
+                liveChart = null;
+            }
+            document.getElementById('live-poll-display').innerHTML = ''; // Clear display
+            document.getElementById('live-results-status').textContent = ''; // Clear status message
+        }
+
+        function updateLivePollDisplay(currentAnimatedVotes) {
+            const displayDiv = document.getElementById('live-poll-display');
+            displayDiv.innerHTML = ''; // Clear previous content
+
+            if (candidates.length === 0) {
+                displayDiv.innerHTML = '<p class="text-center text-gray-500 col-span-full">No candidates configured.</p>';
+                return;
+            }
+
+            const totalVotesCurrent = Object.values(currentAnimatedVotes).reduce((sum, count) => sum + count, 0);
+
+            // Create a sorted list based on current animated votes
+            const sortedCandidates = candidates
+                .map(c => ({
+                    ...c,
+                    currentVotes: currentAnimatedVotes[c.id] || 0
+                }))
+                .sort((a, b) => b.currentVotes - a.currentVotes);
+
+            const maxCurrentVote = Math.max(...Object.values(currentAnimatedVotes));
+
+            sortedCandidates.forEach(candidate => {
+                const percentage = totalVotesCurrent > 0 ? ((candidate.currentVotes / totalVotesCurrent) * 100).toFixed(2) : '0.00';
+                const barWidth = maxCurrentVote > 0 ? (candidate.currentVotes / maxCurrentVote) * 100 : 0; // Relative to current highest
+
+                const item = document.createElement('div');
+                item.className = 'live-result-item';
+                item.innerHTML = `
+                    <div class="live-result-candidate-header">
+                        <span class="live-result-candidate-name">${candidate.symbol} ${candidate.name}</span>
+                        <span class="live-result-votes-count">${candidate.currentVotes} Votes (${percentage}%)</span>
+                    </div>
+                    <div class="live-result-bar-container">
+                        <div class="live-result-bar" style="width: ${barWidth}%;"></div>
+                    </div>
+                `;
+                displayDiv.appendChild(item);
+            });
+        }
+
+
+        // --- Initialization ---
+        window.onload = () => {
+            loadAllData(); // Load all data from localStorage on app start
+            showPage('home-page'); // Show home page first
+        };
+    </script>
+</body>
+</html>
