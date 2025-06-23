@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Voting System</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -26,7 +25,6 @@
             }
         }
     </script>
-    <!-- Chart.js CDN for animated charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* General Styles */
@@ -393,7 +391,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Home Page -->
         <div id="home-page" class="page-section active p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg shadow-md">
             <h1 class="section-title">Welcome to E-Voting System</h1>
             <p class="text-lg text-center text-gray-700 mb-8">Your secure and animated election experience.</p>
@@ -405,7 +402,6 @@
             </div>
         </div>
 
-        <!-- Admin Login Page -->
         <div id="admin-login-page" class="page-section p-6 bg-yellow-50 rounded-lg shadow-md">
             <h2 class="section-title">Admin Login</h2>
             <div class="max-w-sm mx-auto flex flex-col gap-4">
@@ -416,12 +412,10 @@
             </div>
         </div>
 
-        <!-- Admin Page -->
         <div id="admin-page" class="page-section p-6 bg-blue-50 rounded-lg shadow-md">
             <h2 class="section-title">Admin Panel</h2>
             <button class="button-secondary mb-6" onclick="showPage('home-page')">Back to Home</button>
 
-            <!-- Candidate Management -->
             <div class="mb-8 p-5 bg-white rounded-lg shadow-inner">
                 <h3 class="text-xl font-bold mb-4 text-gray-700">Candidate Management</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -433,19 +427,15 @@
                 <p id="candidate-status" class="error-message"></p>
                 <div id="candidates-list-admin" class="mt-6 border-t pt-4">
                     <h4 class="font-semibold text-lg mb-3">Current Candidates:</h4>
-                    <!-- Candidates will be listed here -->
-                </div>
+                    </div>
             </div>
 
-            <!-- Voter List Management -->
             <div class="mb-8 p-5 bg-white rounded-lg shadow-inner">
                 <h3 class="text-xl font-bold mb-4 text-gray-700">Registered Voters</h3>
                 <p id="voter-list-status" class="success-message"></p>
                 <div class="flex flex-col sm:flex-row gap-3 mb-4">
                     <button class="button-secondary flex-1" onclick="downloadVoterList()">Download Voters (CSV)</button>
-                    <!-- For editing from Google Sheet, user would manually re-upload or sync.
-                         In this simulation, we handle internal data. -->
-                </div>
+                    </div>
                 <div id="voters-list-admin" class="mt-6 border-t pt-4 overflow-x-auto">
                     <h4 class="font-semibold text-lg mb-3">All Registered Voters:</h4>
                     <table class="data-table w-full">
@@ -459,21 +449,18 @@
                             </tr>
                         </thead>
                         <tbody id="voters-table-body">
-                            <!-- Voters will be listed here -->
-                        </tbody>
+                            </tbody>
                     </table>
                     <p id="no-voters-message" class="text-center text-gray-500 mt-4 hidden">No voters registered yet.</p>
                 </div>
             </div>
 
-            <!-- Live Poll Status Link -->
             <div class="p-5 bg-white rounded-lg shadow-inner text-center">
                 <h3 class="text-xl font-bold mb-4 text-gray-700">Live Poll Status</h3>
                 <button class="button-primary" onclick="showLiveResultsProtected()">View Live Poll Status</button>
             </div>
         </div>
 
-        <!-- Voter Register Page -->
         <div id="voter-register-page" class="page-section p-6 bg-purple-50 rounded-lg shadow-md">
             <h2 class="section-title">Voter Registration</h2>
             <div class="max-w-md mx-auto flex flex-col gap-4">
@@ -486,47 +473,40 @@
                     <option value="8-12">Section 8-12</option>
                 </select>
                 <p id="voter-register-status" class="error-message"></p>
-                <button class="button-primary w-full" onclick="registerVoter()">Go to Poll</button>
+                <button class="button-primary w-full" onclick="registerVoter()">Register</button>
                 <button class="button-secondary w-full" onclick="showPage('home-page')">Back to Home</button>
             </div>
         </div>
 
-        <!-- Cast Vote Page -->
         <div id="cast-vote-page" class="page-section p-6 bg-indigo-50 rounded-lg shadow-md">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="section-title flex-grow text-left md:text-center m-0">Cast Your Vote</h2>
                 <button class="button-secondary" onclick="showPage('home-page')">Home</button>
             </div>
 
-            <!-- Voter Confirmation Section -->
             <div id="voter-confirm-section" class="mb-6 p-5 bg-blue-100 rounded-lg shadow-inner text-center">
                 <h3 class="text-xl font-bold text-gray-700 mb-3">Confirm Your Details</h3>
                 <p id="voter-display-info" class="text-gray-600 text-lg mb-4">Please register first, or enter your Admission Number if already registered:</p>
                 <input type="text" id="confirm-admission-input" class="input-field max-w-xs mx-auto mb-4" placeholder="Enter your Admission Number">
                 <p id="cast-vote-status" class="error-message"></p>
                 <button class="button-primary" id="confirm-voter-button" onclick="confirmVoter()">Confirm Identity</button>
-                <button class="button-secondary ml-3" onclick="showPage('voter-register-page')">Register New Voter</button>
             </div>
 
-            <!-- Candidate Voting Section -->
             <div id="voting-buttons-section" class="hidden">
                 <h3 class="text-xl font-bold text-gray-700 mb-4 text-center">Select <span id="votes-needed">2</span> Candidates:</h3>
                 <div id="candidates-evm-container" class="flex flex-col gap-3">
-                    <!-- EVM-like candidate buttons will be inserted here -->
-                </div>
+                    </div>
                 <p id="selection-status" class="error-message text-center mt-4"></p>
                 <button id="submit-votes-button" class="button-primary w-full mt-6 opacity-50 cursor-not-allowed" disabled onclick="submitVotes()">Submit Votes</button>
             </div>
         </div>
 
-        <!-- Results Page -->
         <div id="results-page" class="page-section p-6 bg-green-50 rounded-lg shadow-md">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="section-title flex-grow text-left md:text-center m-0">Election Results Overview</h2>
                 <button class="button-secondary" onclick="showPage('home-page')">Home</button>
             </div>
 
-            <!-- Candidate Wise Results -->
             <div class="mb-8 p-5 bg-white rounded-lg shadow-inner">
                 <h3 class="text-xl font-bold mb-4 text-gray-700">Candidate-wise Vote Counts</h3>
                 <div id="candidate-results-display" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -534,7 +514,6 @@
                 </div>
             </div>
 
-            <!-- Admin Actions for Results Page -->
             <div class="p-5 bg-white rounded-lg shadow-inner flex flex-col sm:flex-row justify-center items-center gap-4">
                 <button class="button-secondary" onclick="downloadFinalResultsCSV()">Download Final Results (CSV)</button>
                 <button class="button-danger" onclick="confirmResetAllVotes()">Reset All Votes</button>
@@ -542,7 +521,6 @@
             </div>
         </div>
 
-        <!-- Live Results Page -->
         <div id="liveresult-page" class="page-section p-6 bg-gray-900 text-white rounded-lg shadow-2xl">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="section-title text-white flex-grow text-left md:text-center m-0 before:bg-white after:bg-white">Live Election Broadcast</h2>
@@ -553,11 +531,9 @@
                 <canvas id="animatedVoteChart"></canvas>
             </div>
             <div id="live-poll-display" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Live poll results will appear here -->
-            </div>
+                </div>
         </div>
 
-        <!-- Custom Confirmation Modal -->
         <div id="confirmation-modal" class="modal-overlay">
             <div class="modal-content">
                 <p id="modal-message" class="text-lg font-semibold text-gray-800 mb-6"></p>
@@ -569,8 +545,7 @@
         </div>
     </div>
 
-    <!-- Audio for beep sound -->
-    <audio id="beep-sound" src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjMuMTAwAAAAAAAAAAAAAAAAMGqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqd">
+    <audio id="beep-sound" src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjMuMTAwAAAAAAAAAAAAAAAAMGqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq">
     <script>
         // --- Global Data & State ---
         const ADMIN_PASSWORD = "2025";
@@ -981,7 +956,7 @@
             };
             registeredVoters.push(newVoter);
             saveData('e_voting_registered_voters', registeredVoters);
-            showMessage('voter-register-status', 'Registration successful! Redirecting to poll...', false, 2000);
+            showMessage('voter-register-status', 'Registration successful! You can now cast your vote.', false, 3000); // Changed message
 
             // Store the newly registered voter for the cast vote page for auto-fill
             sessionStorage.setItem('currentVoterAdmissionNo', admissionNo);
@@ -989,7 +964,7 @@
             nameInput.value = '';
             admissionInput.value = '';
             sectionSelect.value = '';
-            setTimeout(() => showPage('cast-vote-page'), 2000);
+            // Removed: setTimeout(() => showPage('cast-vote-page'), 2000); // Do not redirect automatically
         }
 
         // Cast Vote Page
@@ -1011,12 +986,15 @@
             const lastRegisteredAdmissionNo = sessionStorage.getItem('currentVoterAdmissionNo');
             if (lastRegisteredAdmissionNo) {
                 confirmAdmissionInput.value = lastRegisteredAdmissionNo;
-                voterDisplayInfo.innerHTML = `Welcome back! Please confirm your identity. <br> Admission No: ${lastRegisteredAdmissionNo}`;
+                voterDisplayInfo.innerHTML = `Welcome! Your Admission No. is pre-filled. Click Confirm Identity.`; // Updated message
+                // Automatically confirm the voter if admission number is present
+                confirmVoter(); // Automatically call confirmVoter to fetch details
             } else {
                 confirmAdmissionInput.value = '';
                 voterDisplayInfo.textContent = `Please register first, or enter your Admission Number if already registered:`;
             }
 
+            // Initially show the confirmation section
             confirmSection.classList.remove('hidden');
             votingSection.classList.add('hidden');
         }
